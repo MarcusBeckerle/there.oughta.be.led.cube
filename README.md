@@ -1,11 +1,29 @@
-# there.oughta.be
-Projects featured on my blog at https://there.oughta.be
+# Modifications to there.oughta.be/an/led-cube
+In order to align the panels in a way that also the default matrix examples make sense and do not run from right to left on first panel, then on second panel from bottom to top and then on top panel from front to back, I had to rotate the pabels and change the vcoords.
 
-All projects are published under the GNU GPL 3.
+For one panel, the vcoords consist of 8 rows: [1..8]. You can calculate the rotations by using the following schema:
+90 degree rotation orders:
+1 2 3 4 5 6 7 8
+5 6 1 2 7 8 3 4
+7 8 5 6 3 4 1 2
+3 4 7 8 1 2 5 6
+1 2 3 4 5 6 7 8
 
-Issues can be posted to the issue tracker (although not all projects will be actively supported).
-Discussions, ideas and presentations of your builds should be posted at [r/thereoughtabe on reddit](https://www.reddit.com/r/thereoughtabe/).
+Basically, you always chain the first operation.
 
-This repository is a collection of small projects that I share and present on https://there.oughta.be. If they end up here, this usually means that they are not particularly large and that I do not expect to actively maintain them. Nevertheless, if you want to submit a pull request or report an issue, I will see if I can do something, especially if it is a project that I am still using myself.
 
-<a href="https://www.buymeacoffee.com/there.oughta.be" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-blue.png" alt="Buy Me A Coffee" height="47" width="174" ></a>
+## 3dprint
+This folder contains blend and STL files for the 3d printed case. The cube shown on there.oughta.be consists of three sides that hold a panel each (sides.stl), two sides holding the Raspberry Pi 2 (sides_pi_bottom.stl and sides_pi_side.stl) and one plain solid side (sides_filled.stl).
+
+**Also checkout the README in the 3dprint folder for alternative designs.**
+
+## cpu-udp-sender
+This is the Python 3 script running on the PC that sends its CPU status to the cube to be visualized.
+
+**Also checkout the README in the cpu-udp-sender folder for alternative solutions.**
+
+## led-cube
+This also requires the appropriate OpenGL libraries to be present and linked against. On the Raspbian system on which this has been developed, compilation was done via g++ with the command `g++ -g -o cpu-stats-gl cpu-stats-gl.cpp -std=c++11 -lbrcmEGL -lbrcmGLESv2 -I/opt/vc/include -L/opt/vc/lib -Lrpi-rgb-led-matrix/lib -lrgbmatrix -lrt -lm -lpthread -lstdc++ -Irpi-rgb-led-matrix/include/`. (Obviously, the rpi-rgb-led-matrix library was just installed into a subdirectory.)
+
+## Credits
+The led-cube code is a slightly changed version of Sebastian Staacks cube. Please refer to https://there.oughta.be/an/led-cube to learn much more about this project.
