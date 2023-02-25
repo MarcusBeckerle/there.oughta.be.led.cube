@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Example UI</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.15/tailwind.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script src="https://code.jquery.com/jquery-3.6.3.min.js" crossorigin="anonymous"></script>
+  <style>
+    .card {
+      width: 600px;
+      height: 400px;
+    }
+    .color-select.selected {
+      transform: scale(1.5);
+    }
+  </style>
+  <script>
+    $(document).ready(function() {
+      // set default values
+      var color = 0;
+      var ringWidth = 0;
+      var ringPercent = 100;
+      var destination = "send.php";
+
+      // update server every second
+      setInterval(function() {
+        console.log("Sending color='"+color+"' and segment='"+ringWidth+"' usage='"+ringPercent+"' to destination='"+destination+"'" );
+        $.ajax({
+          type: "POST",
+          url: "send.php",
+          data: {
+            color: color,
+            segment: ringWidth,
+            usage: ringPercent
+          },
+          success: function(response) {
+            console.log("Server updated: " + response);
+          },
+          error: function() {
+            console.log("Error updating server");
+          }
+        });
+      }, 3000);
+
+      // handle color selection
+      $(".color-select").click(function() {
+        // remove previous selection
+        $(".color-select.selected").removeClass("selected");
+        // set new selection
+        $(this).addClass("selected");
+
+        color = $(this).data("value");
+        updateValues();
+      });
+
+        // handle ring width selection
+        $("#ring-width").on("input", function() {
+            ringWidth = $(this).val();
+            updateValues();
+        });
+
+        // handle #segments to modify from 0..x
+        $("#ring-percent").on("input", function() {
+            ringPercent = $(this).val();
+            updateValues();
+        });
+
+      // update displayed values
+      function updateValues() {
+        $("#color-value").text(color);
+        $("#ring-width-value").text(ringWidth + " %");
+        $("#ring-percent-value").text(ringPercent + " %");
+      }
+    });
+  </script>
+</head>
+<body class="bg-gray-200">
+  <div class="flex justify-center items-center h-screen">
+    <div class="rounded-lg bg-white shadow-lg p-8 flex flex-col justify-between card">
+      <div class="flex items-center mb-4">
+        <div class="w-20 h-20 rounded-full bg-gray-400 mr-4 overflow-hidden" ><img src="cube.jpg" class="h-full"></div>
+        <h2 class="text-xl font-bold">LED Cube Control</h2>
+      </div>
+      <div class="flex items-center mb-4">
+        <div class="mr-6 w-40 font-bold">Color:</div>
+        <div class="flex items-center">
+          <div class="color-select selected mr-6 w-6 h-6 rounded-full bg-blue-500" data-value="0"></div>
+          <div class="color-select mr-6 w-6 h-6 rounded-full bg-yellow-500" data-value="60"></div>
+          <div class="color-select w-6 h-6 rounded-full bg-red-500" data-value="100"></div>
+        </div>
+      </div>
+      <div class="flex items-center mb-4">
+        <div class="mr-6 w-40 font-bold">Ring width:</div>
+        <input id="ring-width" class="w-full" type="range" min="0" max="100" value="0">
+        <div id="ring-width-value" class="ml-2 w-24">0 %</div>
+      </div>
+      <div class="flex items-center mb-4">
+        <div class="mr-6 w-40 font-bold">Ring percent:</div>
+        <input id="ring-percent" class="w-full" type="range" min="0" max="100" step="10" value="100">
+        <div id="ring-percent-value" class="ml-2 w-24">100 %</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

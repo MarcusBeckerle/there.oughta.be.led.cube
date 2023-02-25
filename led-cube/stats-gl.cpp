@@ -19,7 +19,7 @@
 #include <netinet/in.h>
 
 // Define interval for auto blanking - set to zero to disable
-#define BLANKINTERVAL 12
+#define BLANKINTERVAL 60
 
 //UDP port to listen for status updates
 #define PORT 1337
@@ -31,13 +31,13 @@
 #define W 192
 #define H 64
 
-//Number of CPU cores (or threads) to be represented on the ring
-#define CORES 12
+//Number of animation segments to be represented on the ring
+#define SEGMENTS 10
 
-//Temperature thresholds for cool (blue), medium (green/yellow) and hot (red)
-#define T1 40.0 //Do not omit the decimal point. This will be used in the OpenGL shader which will otherwise interpret it as a float literal
-#define T2 60.0
-#define T3 80.0
+//Colour thresholds for cool (blue), medium (green/yellow) and hot (red)
+#define CT1 40.0 //Do not omit the decimal point. This will be used in the OpenGL shader which will otherwise interpret it as a float literal
+#define CT2 60.0
+#define CT3 80.0
 
 //That's it up here, but you might also want to change the settings for your RGB matrix in line 462 below
 
@@ -46,10 +46,10 @@ using rgb_matrix::Canvas;
 
 using namespace rgb_matrix;
 
-float temperature = 30.f;
-float cpu[CORES];
-float ttemperature = 30.f;
-float tcpu[CORES];
+float colourLevel = 30.f;
+float segment[SEGMENTS];
+float tcolourLevel = 30.f;
+float tsegment[SEGMENTS];
 
 float t = 0.f;
 float updateTime = -10.0f;
@@ -179,12 +179,12 @@ static const char *vertexShaderCode = STRINGIFY(
 );
 
 static const char *fragmentShaderCode1 = STRINGIFY(
-    const int CORES = ) RESTRINGIFY(CORES) STRINGIFY(;
-    const float T1 = ) RESTRINGIFY(T1) STRINGIFY(;
-    const float T2 = ) RESTRINGIFY(T2) STRINGIFY(;
-    const float T3 = ) RESTRINGIFY(T3) STRINGIFY(;
-    uniform float temperature;
-    uniform float cpu[CORES];
+    const int SEGMENTS = ) RESTRINGIFY(SEGMENTS) STRINGIFY(;
+    const float CT1 = ) RESTRINGIFY(CT1) STRINGIFY(;
+    const float CT2 = ) RESTRINGIFY(CT2) STRINGIFY(;
+    const float CT3 = ) RESTRINGIFY(CT3) STRINGIFY(;
+    uniform float colourLevel;
+    uniform float segment[SEGMENTS];
     vec3 mcolor = vec3(0.1, 0.6, 0.4);
     vec3 mcolorwarm = vec3(0.5, 0.5, 0.1);
     vec3 mcolorhot = vec3(0.6, 0.2, 0.1);
@@ -196,21 +196,21 @@ static const char *fragmentShaderCode1 = STRINGIFY(
     varying vec2 fragCoord;
 
     float phi;
-    float cpuf = 0.0;
+    float segmentf = 0.0;
 
     float circle(vec2 uv, float w0, float width) {
         float f = length(uv) + (sin(normalize(uv).y * 5.0 + time * 2.0) - sin(normalize(uv).x * 5.0 + time * 2.0)) / 100.0;
-        float w = width + width*cpuf*0.1;
+        float w = width + width*segmentf*0.1;
         return smoothstep(w0-w, w0, f) - smoothstep(w0, w0+w, f);
     }
 
     void main() {
         vec2 coords = fragCoord.xy*0.5;
-        float phi = (atan(coords.y, coords.x)+3.1415926538)/3.1415926538*float(CORES)*0.5;
+        float phi = (atan(coords.y, coords.x)+3.1415926538)/3.1415926538*float(SEGMENTS)*0.5;
 );
 
 void fragmentShaderCodeLoop(char *str, int i) {
-    sprintf(str, "cpuf += clamp(1.0-abs(phi-%d.0), 0.0, 1.0)*cpu[%d];", i, i % CORES);
+    sprintf(str, "segmentf += clamp(1.0-abs(phi-%d.0), 0.0, 1.0)*segment[%d];", i, i % SEGMENTS);
 }
 
 static const char *fragmentShaderCode2 = STRINGIFY(
@@ -228,9 +228,9 @@ static const char *fragmentShaderCode2 = STRINGIFY(
         c /= 8.0;
         c = 1.5 - sqrt(pow(c, 2.0));
         mcolor.g = clamp(coords.x, 0.0, 1.0);
-        mcolor = smoothstep(T2, T1, temperature)*mcolor + smoothstep(T1, T2, temperature)*smoothstep(T3, T2, temperature)*mcolorwarm + smoothstep(T2, T3, temperature)*mcolorhot;
+        mcolor = smoothstep(CT2, CT1, colourLevel)*mcolor + smoothstep(CT1, CT2, colourLevel)*smoothstep(CT3, CT2, colourLevel)*mcolorwarm + smoothstep(CT2, CT3, colourLevel)*mcolorhot;
          
-        ccolor = smoothstep(50.0, 0.0, cpuf)*ccolor + smoothstep(0.0, 50.0, cpuf)*smoothstep(100.0, 50.0, cpuf)*ccolorwarm + smoothstep(50.0, 100.0, cpuf)*ccolorhot;
+        ccolor = smoothstep(50.0, 0.0, segmentf)*ccolor + smoothstep(0.0, 50.0, segmentf)*smoothstep(100.0, 50.0, segmentf)*ccolorwarm + smoothstep(50.0, 100.0, segmentf)*ccolorhot;
         ccolor *= circle(coords, 0.25, 0.01);
 
         vec3 outcolor = mcolor * c * c * c * c + ccolor;
@@ -350,13 +350,13 @@ void receiveUDP() {
             while (i < nIn) {
                 float entry = atof(buf+i);
                 switch (j) {
-                    case 0: ttemperature = entry;
+                    case 0: tcolourLevel = entry;
                             break;
                     default:
                             int k = j-1;
-                            if (k >= CORES)
+                            if (k >= SEGMENTS)
                                 break;
-                            tcpu[k] = entry;
+                            tsegment[k] = entry;
                             break;
                 }
                 j++;
@@ -390,7 +390,7 @@ int main(int argc, char *argv[]) {
     int major, minor;
     int desiredWidth, desiredHeight;
     GLuint program, vert, frag, vbo, vbocoord;
-    GLint posLoc, coordLoc, temperatureLoc, cpuLoc, timeLoc, ageLoc, result;
+    GLint posLoc, coordLoc, colourLevelLoc, segmentLoc, timeLoc, ageLoc, result;
 
     if ((display = eglGetDisplay(EGL_DEFAULT_DISPLAY)) == EGL_NO_DISPLAY) {
         fprintf(stderr, "Failed to get EGL display! Error: %s\n",
@@ -466,10 +466,10 @@ int main(int argc, char *argv[]) {
     if (!checkShader(vert))
         return EXIT_FAILURE;
 
-    const int codelength = strlen(fragmentShaderCode1) + (CORES+1)*60 + strlen(fragmentShaderCode2);
+    const int codelength = strlen(fragmentShaderCode1) + (SEGMENTS+1)*60 + strlen(fragmentShaderCode2);
     char fragmentShaderCode[codelength];
     strcpy(fragmentShaderCode, fragmentShaderCode1);
-    for (int i = 0; i <= CORES; i++) {
+    for (int i = 0; i <= SEGMENTS; i++) {
         char loopCode[60];
         fragmentShaderCodeLoop(loopCode, i);
         strcat(fragmentShaderCode, loopCode);
@@ -499,8 +499,8 @@ int main(int argc, char *argv[]) {
     // Get vertex attribute and uniform locations
     posLoc = glGetAttribLocation(program, "pos");
     coordLoc = glGetAttribLocation(program, "coord");
-    temperatureLoc = glGetUniformLocation(program, "temperature");
-    cpuLoc = glGetUniformLocation(program, "cpu");
+    colourLevelLoc = glGetUniformLocation(program, "colourLevel");
+    segmentLoc = glGetUniformLocation(program, "segment");
     timeLoc = glGetUniformLocation(program, "time");
     ageLoc = glGetUniformLocation(program, "age");
 
@@ -543,9 +543,9 @@ int main(int argc, char *argv[]) {
 
     std::thread networking(receiveUDP);
 
-    for (int i = 0; i < CORES; i++) {
-        cpu[i] = 0.0;
-        tcpu[i] = 0.0;
+    for (int i = 0; i < SEGMENTS; i++) {
+        segment[i] = 0.0;
+        tsegment[i] = 0.0;
     }
 
     while (!interrupt_received) {
@@ -565,18 +565,18 @@ int main(int argc, char *argv[]) {
 	        glUniform1f(timeLoc, t);
         	glUniform1f(ageLoc, float(t - updateTime));
 
-	        if (ttemperature > temperature)
-	            temperature += 0.2*ANIMSTEP;
-	        if (ttemperature < temperature)
-	            temperature -= 0.2*ANIMSTEP;
-	        for (int i = 0; i < CORES; i++) {
-	            if (tcpu[i] > cpu[i])
-	                cpu[i] += ANIMSTEP;
-	            if (tcpu[i] < cpu[i])
-	                cpu[i] -= ANIMSTEP;
+	        if (tcolourLevel > colourLevel)
+	            colourLevel += 0.2*ANIMSTEP;
+	        if (tcolourLevel < colourLevel)
+	            colourLevel -= 0.2*ANIMSTEP;
+	        for (int i = 0; i < SEGMENTS; i++) {
+	            if (tsegment[i] > segment[i])
+	                segment[i] += ANIMSTEP;
+	            if (tsegment[i] < segment[i])
+	                segment[i] -= ANIMSTEP;
 	        }
-	        glUniform1f(temperatureLoc, temperature);
-	        glUniform1fv(cpuLoc, CORES, cpu);
+	        glUniform1f(colourLevelLoc, colourLevel);
+	        glUniform1fv(segmentLoc, SEGMENTS, segment);
 	        glDrawArrays(GL_TRIANGLE_STRIP, 0, 12);
 	        glReadPixels(0, 0, W, H, GL_RGB, GL_UNSIGNED_BYTE, buffer);
 	        for (int x = 0; x < W; x++) {
