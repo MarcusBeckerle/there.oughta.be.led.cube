@@ -1,12 +1,17 @@
 # Modifications to there.oughta.be/an/led-cube
-In order to align the panels in a way that also the default matrix examples make sense and do not run from right to left on first panel, then on second panel from bottom to top and then on top panel from front to back, I had to rotate the pabels and change the vcoords.
+In order to align the panels in a way that also the default matrix examples make sense and do not run from right to left on first panel, then on second panel from bottom to top and then on top panel from front to back, I had to rotate the panels and change the vcoords.
 
 For one panel, the vcoords consist of 8 rows: [1..8]. You can calculate the rotations by using the following schema:
 90 degree rotation orders:
+
 1 2 3 4 5 6 7 8
+
 5 6 1 2 7 8 3 4
+
 7 8 5 6 3 4 1 2
+
 3 4 7 8 1 2 5 6
+
 1 2 3 4 5 6 7 8
 
 Basically, you always chain the first operation.
