@@ -36,5 +36,31 @@ This is a very simple PHP script with a small HTML UI that sends a selection of 
 ## led-cube
 This also requires the appropriate OpenGL libraries to be present and linked against. On the Raspbian system on which this has been developed, compilation was done via g++ with the command `g++ -g -o stats-gl stats-gl.cpp -std=c++11 -lbrcmEGL -lbrcmGLESv2 -I/opt/vc/include -L/opt/vc/lib -Lrpi-rgb-led-matrix/lib -lrgbmatrix -lrt -lm -lpthread -lstdc++ -Irpi-rgb-led-matrix/include/`. (Obviously, the rpi-rgb-led-matrix library was just installed into a subdirectory.)
 
+# Reset Raspberry Pi OS user password (after several years I actually did not remember, this is the generic Raspberry OS reset)
+
+1) Power off the Pi, remove the SD card.
+2) Insert SD card into another computer.
+3) Open the **boot** partition and edit `cmdline.txt`.
+   - It is **one single line**.
+   - Add this to the very end (with a space before it):
+     init=/bin/sh
+
+4) Save `cmdline.txt`, eject SD, put it back into the Pi, boot.
+
+5) At the shell, make the filesystem writable:
+   mount -o remount,rw /
+
+6) Set a new password (replace `<user>` with your username, e.g. `pi`):
+   passwd <user>
+
+7) Reboot / power off:
+   sync
+   reboot -f
+
+8) Put SD back into the other computer, edit `cmdline.txt` again and REMOVE:
+   init=/bin/sh
+
+9) Boot normally and log in with the new password.
+
 ## Credits
 The led-cube code is a slightly changed version of Sebastian Staacks cube. Please refer to https://there.oughta.be/an/led-cube to learn much more about this project.
