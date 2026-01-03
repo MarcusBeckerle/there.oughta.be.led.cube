@@ -56,6 +56,22 @@ sudo raspi-config
 # Use arrow keys: 1 System Options -> S1 Wireless LAN
 ```
 
+### Audio Hardware Conflict (PWM)
+The LED matrix library conflicts with the Pi's onboard sound module.
+
+**Symptoms:**
+* Error: `snd_bcm2835: found that the Pi sound module is loaded.`
+* Matrix flickers or refuses to start.
+
+**Fix:**
+```bash
+# Disable audio in config
+sudo sed -i 's/dtparam=audio=on/dtparam=audio=off/g' /boot/config.txt
+# Blacklist the module
+echo "blacklist snd_bcm2835" | sudo tee /etc/modprobe.d/alsa-blacklist.conf
+sudo reboot
+```
+
 ---
 
 ## Project Headers & Dependencies
@@ -177,6 +193,50 @@ g++ -g -o led-controller main.cpp -std=c++11 \
 -Lrpi-rgb-led-matrix/lib -lrgbmatrix \
 -lbrcmEGL -lbrcmGLESv2 -lrt -lm -lpthread -lstdc++
 ```
+
+
+### Autostart Configuration (Systemd)
+
+To ensure the LED Cube Controller starts automatically on boot and stays running in the background, a `systemd` service is used.
+
+#### 1. Create the Service File
+Execute the following command to create the configuration file:
+```bash
+sudo nano /etc/systemd/system/led-cube.service
+```
+
+#### 2. Service Definition
+Paste the following content into the editor (Adjust paths if your username differs):
+```ini
+[Unit]
+Description=LED Cube Controller API
+After=network.target
+
+[Service]
+Type=simple
+User=mbeckerle
+WorkingDirectory=/home/mbeckerle/stats-gl
+ExecStart=/bin/bash /home/mbeckerle/stats-gl/run-led_cube.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+#### 3. Activation Commands
+Run these commands to enable and start the service:
+```bash
+# Reload systemd to recognize the new file
+sudo systemctl daemon-reload
+
+# Enable the service to run on every boot
+sudo systemctl enable led-cube.service
+
+# Start the service immediately
+sudo systemctl start led-cube.service
+```
+
 
 ---
 
