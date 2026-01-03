@@ -11,10 +11,65 @@ This project is a heavily modernized version of the [there.oughta.be](https://th
 
 ---
 
-## Hardware Configuration & Mapping
-The cube consists of three 64x64 panels chained together for a total resolution of **192x64**.
+## Hardware & Dependencies
 
-### Orientation Fixes
+### 1. Panel Configuration
+* **Resolution:** 3 panels (64x64 each) for a total width of 192.
+* **Alignment:** `map_flip_x = false`, `map_flip_y = false`, and `map_reverse_panels = false`.
+
+## WLAN Driver Installation (Archer T2U Nano)
+
+The TP-Link Archer T2U Nano uses the **Realtek RTL8811AU** chipset (ID 2357:011e). Because your kernel is `5.15.84-v7+`, you must manually install the headers and build the driver using the following exact commands.
+
+### 1. Installation & Driver Build Commands
+
+```bash
+# 1. Update the package lists
+sudo apt update
+
+# 2. Install the kernel headers and build tools (Required for .h files)
+sudo apt install raspberrypi-kernel-headers build-essential bc dkms git -y
+
+# 3. Navigate into your driver source directory
+cd ~/8821au-20210708
+
+# 4. Clean any previous failed build attempts
+make clean
+
+# 5. Set the environment flag to bypass the GCC version mismatch (8 vs 10)
+export IGNORE_CC_MISMATCH=1
+
+# 6. Execute the automated installer script
+sudo ./install-driver.sh
+```
+
+### 2. Post-Installation & Network Config
+
+Once the installer finishes, it will prompt for a reboot. After the reboot, execute these commands to finalize the connection:
+
+```bash
+# 1. Verify that the wlan0 interface is now active
+ip link show wlan0
+
+# 2. Open the configuration utility to set your SSID and Password
+sudo raspi-config
+# Use arrow keys: 1 System Options -> S1 Wireless LAN
+```
+
+---
+
+## Project Headers & Dependencies
+
+The C++ controller requires specific header files to be present in the project directory (`~/stats-gl/`) for successful compilation:
+
+* **`httplib.h`**: Manages the multi-threaded REST API server.
+* **`json.hpp`**: Handles the parsing of JSON payloads for the `/update` endpoint.
+* **`GL/gl.h` & `EGL/egl.h`**: Provided by the Raspberry Pi Userland for OpenGL ES 2.0 rendering.
+* **`rpi-rgb-led-matrix`**: The core library headers for the 192x64 panel array.
+
+---
+
+## Orientation Fixes
 To ensure animations (like the circular `percent` arc) flow correctly across the Top, Left, and Right faces, the `map_xy` function handles local panel inversions.
 * **Top Panel (0-63):** The X-axis is locally flipped (`63 - mx`) inside the `map_xy` logic. This ensures that as the `percent` increases, the arc flows seamlessly across physical edges rather than jumping or reversing.
 * **Left/Right Panels:** Standard alignment.
