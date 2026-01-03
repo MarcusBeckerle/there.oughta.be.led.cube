@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="php-data-sender/cube.jpg" width="720">
+</p>
+
 # LED Cube Controller: REST API & GLES2 Shader Overhaul
 
 This project is a heavily modernized version of the [there.oughta.be](https://there.oughta.be/an/led-cube) cube. It has been transformed from a basic CPU monitor into a real-time, API-controllable art piece featuring custom GLES2 shaders and a smooth "Magic Shine" procedural background.
@@ -249,6 +253,63 @@ If you are locked out of your Raspberry Pi (as I was, after several years, when 
 3.  **Boot the Pi**: At the shell prompt, run `mount -o remount,rw /`.
 4.  **Reset Password**: Type `passwd <user>` (e.g., `pi`) and enter your new password.
 5.  **Cleanup**: Run `sync`, power off, and **remove** the `init=/bin/sh` string from `cmdline.txt` before booting normally.
+
+
+## UI Screenshots
+### Initialization
+
+<p align="center">
+  <img src="docs/images/initialization.png" width="720">
+</p>
+
+<p align="center">
+  <em>Initialization & server connection</em>
+</p>
+### Heat Mode
+
+<p align="center">
+  <img src="docs/images/heat_mode.png" width="640">
+</p>
+
+<p align="center">
+  <em>Temperature-driven background with segmented ring</em>
+</p>
+### Custom Mode
+
+<p align="center">
+  <img src="docs/images/custom_mode.png" width="640">
+</p>
+
+<p align="center">
+  <img src="docs/images/custom_mode_2.png" width="640">
+</p>
+
+<p align="center">
+  <em>Custom geometry selection, colors and segment control</em>
+</p>
+
+## LED Cube Hardware
+
+<p align="center">
+  <img src="docs/images/cube1.jpg" width="480">
+</p>
+
+<p align="center">
+  <img src="docs/images/cube2.jpg" width="480">
+</p>
+
+<p align="center">
+  <img src="docs/images/cube3.jpg" width="480">
+</p>
+
+<p align="center">
+  <img src="docs/images/cube4.jpg" width="480">
+</p>
+
+<p align="center">
+  <em>192×64 RGB LED cube driven by Raspberry Pi 2</em>
+</p>
+
 
 ## Credits
 
