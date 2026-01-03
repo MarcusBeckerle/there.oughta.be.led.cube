@@ -265,6 +265,7 @@ If you are locked out of your Raspberry Pi (as I was, after several years, when 
 <p align="center">
   <em>Initialization & server connection</em>
 </p>
+
 ### Heat Mode
 
 <p align="center">
@@ -274,6 +275,7 @@ If you are locked out of your Raspberry Pi (as I was, after several years, when 
 <p align="center">
   <em>Temperature-driven background with segmented ring</em>
 </p>
+
 ### Custom Mode
 
 <p align="center">
